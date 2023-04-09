@@ -1,50 +1,68 @@
+
+  const fs = require('fs');
+
 class ProductManager {
-    constructor() {
-      this.products = [];
-      this.nextId = 1;
-    }
-  
-    addProduct(title, description, price, thumbnail, code, stock) {
-    
-      if (!title || !description || !price || !thumbnail || !code || !stock) {
-        console.error("Error: todos los campos son obligatorios.");
-        return;
-      }
-      if (this.getProductByCode(code)) {
-        console.error("Error: el código ya existe.");
-        return;
-      }
-      const product = {
-        id: this.nextId,
-        title: title,
-        description: description,
-        price: price,
-        thumbnail: thumbnail,
-        code: code,
-        stock: stock,
-      };
-      this.products.push(product);
-      this.nextId++;
-    }
-  
-    getProductByCode(code) {
-      
-      const product = this.products.find((product) => product.code === code);
-      return product || null;
-    }
-  
-    getProductById(id) {
-      
-      const product = this.products.find((product) => product.id === id);
-      if (!product) {
-        console.error("Not found");
-      }
-      return product;
-    }
-  
-    getProducts() {
-      
-      return this.products;
+  constructor(file_path) {
+    this.path = file_path;
+    this.products = [];
+    this.loadProducts();
+  }
+
+  loadProducts() {
+    try {
+      const data = fs.readFileSync(this.path, 'utf-8');
+      this.products = JSON.parse(data);
+    } catch (error) {
+      // Si el archivo no existe, se crea uno vacío
+      fs.writeFileSync(this.path, '[]', 'utf-8');
     }
   }
+
+  saveProducts() {
+    fs.writeFileSync(this.path, JSON.stringify(this.products), 'utf-8');
+  }
+
+  addProduct(product) {
+    product.id = this.products.length + 1;
+    this.products.push(product);
+    this.saveProducts();
+  }
+
+  getProducts() {
+    return this.products;
+  }
+
+  getProductById(product_id) {
+    for (const product of this.products) {
+      if (product.id === product_id) {
+        return product;
+      }
+    }
+    return null;
+  }
+
+  updateProduct(product_id, updated_product) {
+    for (const product of this.products) {
+      if (product.id === product_id) {
+        Object.assign(product, updated_product);
+        this.saveProducts();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  deleteProduct(product_id) {
+    for (const product of this.products) {
+      if (product.id === product_id) {
+        const index = this.products.indexOf(product);
+        this.products.splice(index, 1);
+        this.saveProducts();
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
   
